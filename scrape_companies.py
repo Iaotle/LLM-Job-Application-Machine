@@ -1,42 +1,105 @@
+#!/usr/bin/env python3
+from __future__ import annotations
+
 import os
 import requests
 from bs4 import BeautifulSoup
+from typing import List, Optional
+import time
+import logging
+
+# Setup basic logging
+logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
 
 # URL of the webpage
 url = "https://ind.nl/en/public-register-recognised-sponsors/public-register-regular-labour-and-highly-skilled-migrants"
 
-# Send a GET request to the website
-response = requests.get(url)
 
-# Check if the request was successful
-if response.status_code == 200:
-    # Parse the HTML content using BeautifulSoup
-    soup = BeautifulSoup(response.text, 'html.parser')
-    
-    # Find the table body containing the information
+def fetch_webpage(url: str) -> Optional[BeautifulSoup]:
+    """
+    Fetch and parse the webpage.
+    :param url: The URL of the webpage to fetch.
+    :return: Parsed BeautifulSoup object or None if fetch fails.
+    """
+    try:
+        response = requests.get(url, timeout=10)
+        response.raise_for_status()  # Ensure we notice bad responses
+        return BeautifulSoup(response.text, 'html.parser')
+    except requests.RequestException as e:
+        logging.error(f"Error fetching the webpage: {e}")
+        return None
+
+
+def parse_table(soup: BeautifulSoup) -> List[dict]:
+    """
+    Parse the table and extract organisation and KvK number.
+    :param soup: BeautifulSoup object of the webpage.
+    :return: List of dictionaries with organisation name and KvK number.
+    """
+    table_data = []
     table_body = soup.find('tbody')
+
+    row: BeautifulSoup
+    # Iterate over rows, skip the first row (header)
+    for row in table_body.find_all('tr')[1:]:
+        cells: List[BeautifulSoup] = row.find_all('td')
+        if len(cells) == 2:
+            organisation = cells[0].text.strip()
+            kvk_number = cells[1].text.strip()
+            table_data.append({"name": organisation, "kvk": kvk_number})
+
+    return table_data
+
+
+def save_company_data(company: dict) -> int:
+    """
+    Save the company information to a JSON file.
+    Skip saving if the file already exists to avoid overwriting.
+    :param company: Dictionary containing company 'name' and 'kvk'.
+    :return: 1 if file saved, 0 otherwise.
+    """
+    directory = 'companies'
+    os.makedirs(directory, exist_ok=True)  # Create directory if it doesn't exist
+
+    file_path = os.path.join(directory, f'{company["kvk"]}.json')
     
-    if table_body:
-        # Iterate over the rows of the table body
-        for row in table_body.find_all('tr')[1:]: # Skip the first row (header)
-            # Find all table cells in the current row
-            cells = row.find_all('td')
-            
-            # If the row contains 2 cells (organisation name and KvK number)
-            if len(cells) == 2:
-                organisation = cells[0].text.strip()
-                kvk_number = cells[1].text.strip()
-                
-                # Print or store the parsed information
-                print(f"Organisation: {organisation}, KvK Number: {kvk_number}")
-                
-                # if not dir mkdir:
-                if not os.path.exists('companies'):
-                    os.makedirs('companies')
-                # put the info in companies/kvk_number.json
-                with open(f'companies/{kvk_number}.json', 'w') as f:
-                    f.write(f'{{"name": "{organisation}", "kvk": "{kvk_number}"}}')
-    else:
-        print("Table body not found!")
-else:
-    print(f"Failed to retrieve the webpage. Status code: {response.status_code}")
+    if os.path.exists(file_path):
+        logging.debug(f"File already exists, skipping: {file_path}")
+        return 0
+
+    try:
+        with open(file_path, 'w') as f:
+            f.write(f'{{"name": "{company["name"]}", "kvk": "{company["kvk"]}"}}')
+        logging.debug(f'Saved: {company["name"]} (KvK: {company["kvk"]})')
+    except IOError as e:
+        logging.error(f"Error writing to file {file_path}: {e}")
+        return 0
+    return 1
+
+
+def main():
+    """Main function to orchestrate the fetching, parsing, and saving of data."""
+    logging.info(f"Working...")
+    beforeUrl = time.time()
+    soup = fetch_webpage(url)
+    if not soup:
+        return
+    afterUrl = time.time()
+
+    companies = parse_table(soup)
+    
+    afterTableParse = time.time()
+    saved = 0
+    for company in companies:
+        saved += save_company_data(company)
+
+    afterSave = time.time()
+
+    logging.info(f'Done! ({afterSave - beforeUrl:.2f}s) {len(companies)} records processed. {saved} files saved ')
+    logging.debug(f'Webpage fetch: {afterUrl-beforeUrl:.2f}s')
+    logging.debug(f'Table parse:   {afterTableParse-afterUrl:.2f}s')
+    logging.debug(f'File I/O:      {afterSave-afterTableParse:.2f}s')
+
+
+if __name__ == "__main__":
+    main()
