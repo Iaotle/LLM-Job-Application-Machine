@@ -7,6 +7,7 @@ from bs4 import BeautifulSoup
 from typing import List, Optional
 import time
 import logging
+import json
 
 # Setup basic logging
 logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
@@ -69,7 +70,7 @@ def save_company_data(company: dict) -> int:
 
     try:
         with open(file_path, 'w') as f:
-            f.write(f'{{"name": "{company["name"]}", "kvk": "{company["kvk"]}"}}')
+            json.dump(company, f)
         logging.debug(f'Saved: {company["name"]} (KvK: {company["kvk"]})')
     except IOError as e:
         logging.error(f"Error writing to file {file_path}: {e}")
