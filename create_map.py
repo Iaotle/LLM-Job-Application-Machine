@@ -17,17 +17,28 @@ locations = [
 ]
     
 map = folium.Map(zoom_start=13)
+# List to store the coordinates (latitude, longitude) for bounding box
+bounds = []
 
 # Loop through all the locations and add them to the map
 for location in locations:
     location = location.strip()  # Remove extra spaces
     h = geolocator.geocode(location)
     if h:
-        folium.Marker([h.latitude, h.longitude], popup=location).add_to(map)
+        # Store the latitude and longitude for each location
+        coords = [h.latitude, h.longitude]
+        bounds.append(coords)
+        
+        # Add marker to the map
+        folium.Marker(coords, popup=location).add_to(map)
     else:
         print(f"Location '{location}' not found!")
 
-# Display the map
+# Fit the map to the bounds of all locations
+if bounds:
+    map.fit_bounds(bounds)
+
+# Save and display the map
 path = './location_map.html'
 map.save(path)
 webbrowser.open(f'file://{os.path.realpath(path)}')
