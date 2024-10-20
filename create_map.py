@@ -36,6 +36,7 @@ map = folium.Map(zoom_start=13)
 bounds = []
 
 # Loop through all the locations and add them to the map
+i=0
 for location in home_locations:
     location = location.strip()  # Remove extra spaces
     h = geolocator.geocode(location)
@@ -45,7 +46,8 @@ for location in home_locations:
         bounds.append(coords)
         
         # Add marker to the map
-        folium.Marker(coords, popup=location, icon=folium.Icon(icon='home')).add_to(map)
+        folium.Marker(coords, tooltip='Vadim' if i==0 else 'Farrukh', popup=location, icon=folium.Icon(icon='home')).add_to(map)
+        i+=1
     else:
         print(f"Location '{location}' not found!")
 
