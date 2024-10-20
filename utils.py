@@ -6,7 +6,7 @@ from typing import List, Optional
 from company import Company
 
 
-def load_companies(directory: Optional[str] = None) -> List[Company]:
+def load_companies(directory: Optional[str] = './companies') -> List[Company]:
     companies = []
     for filename in os.listdir(directory):
         if filename.endswith('.json'):

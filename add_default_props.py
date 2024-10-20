@@ -5,7 +5,7 @@ import os
 import json
 
 # Define the properties to add with None (null in JSON)
-props = ['website', 'careers_page', 'address', 'sector']
+props = ['website', 'careers_page', 'address', 'sector', 'external_links', 'emails', 'visited']
 
 # Directory containing the JSON files
 directory = './companies'

@@ -9,7 +9,8 @@ from typing import List, Optional, Union
 class Company:
     def __init__(self, name: str, kvk: str, website: Optional[str] = None,
                  careers_page: Optional[str] = None, address: Optional[str] = None,
-                 sector: Optional[str] = None, file_path: Optional[str] = None):
+                 sector: Optional[str] = None, file_path: Optional[str] = None, external_links: Optional[List[str]] = None,
+                 emails: Optional[List[str]] = None, visited: Optional[List[str]] = None):
         self.name = name
         self.kvk = kvk
         self.website = website
@@ -17,6 +18,9 @@ class Company:
         self.address = address
         self.sector = sector
         self.file_path = file_path
+        self.external_links = set()
+        self.emails = set()
+        self.visited = set()
 
     def __repr__(self):
         return f"Company(name={self.name}, kvk={self.kvk}, website={self.website}, " \
@@ -54,6 +58,9 @@ class Company:
             careers_page=data.get('careers_page'),
             address=data.get('address'),
             sector=data.get('sector'),
+            external_links=data.get('external_links'),
+            emails=data.get('emails'),
+            visited=data.get('visited'),
             file_path=path
         )
     
@@ -70,7 +77,10 @@ class Company:
                 'website': self.website,
                 'careers_page': self.careers_page,
                 'address': self.address,
-                'sector': self.sector
+                'sector': self.sector,
+                'external_links': list(self.external_links),
+                'emails': list(self.emails),
+                'visited': list(self.visited)
             }, f, indent=4)
 
 # # Example usage
