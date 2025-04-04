@@ -1,0 +1,1 @@
+Something I was working on while job hunting. It's not finished and you will hit Google's rate limit if you try to use this. The map isn't finished, the link scraping should work okay, but the job scraping isn't implemented.
